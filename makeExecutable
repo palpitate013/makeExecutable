@@ -8,7 +8,7 @@ import shutil
 import json
 import subprocess
 
-SCRIPT_VERSION = "1.0.2"
+SCRIPT_VERSION = "1.0.3"
 REMOTE_SCRIPT_URL = "https://raw.githubusercontent.com/palpitate013/makeExecutable/refs/heads/main/makeExecutable"
 SCRIPT_PATH = "/usr/local/bin/makeExecutable"
 
@@ -39,6 +39,24 @@ def check_for_updates():
 if "--update" in sys.argv:
     check_for_updates()
     sys.exit(0)
+
+def add_to_crontab(executable_name):
+    """Add the executable to the crontab if it's not already there."""
+    try:
+        # Check if crontab already contains the @reboot entry
+        crontab_output = subprocess.check_output(['sudo', 'crontab', '-l'], stderr=subprocess.STDOUT).decode('utf-8')
+
+        if f"@reboot /usr/local/bin/{executable_name}" not in crontab_output:
+            # Add the @reboot entry if it's missing
+            crontab_output += f"\n@reboot /usr/local/bin/{executable_name}\n"
+            subprocess.run(['sudo', 'crontab', '-'], input=crontab_output, text=True)
+            print(f"Added '{executable_name}' to crontab for startup.")
+        else:
+            print(f"'{executable_name}' is already in crontab.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error reading or writing to crontab: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
 def make_executable(file_path, executable_name):
     """
@@ -78,6 +96,10 @@ def make_executable(file_path, executable_name):
         os.chmod(target_path, new_permissions)
         print(f"'{file_path}' is now executable and available as '{executable_name}' in '{target_dir}'.")
         save_executable_command(executable_name, target_path)
+
+        if "--start" in sys.argv:
+            add_to_crontab(executable_name)
+
     except PermissionError:
         print(f"Error: You don't have permission to write to '{target_dir}'. Try running with sudo.")
     except Exception as e:
