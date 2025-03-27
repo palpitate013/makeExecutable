@@ -6,7 +6,7 @@ import shutil
 import json
 
 SCRIPT_VERSION = "1.0.0"
-REMOTE_SCRIPT_URL = ""
+REMOTE_SCRIPT_URL = "https://raw.githubusercontent.com/palpitate013/makeExecutable/refs/heads/main/makeExecutable?token=GHSAT0AAAAAADBIL3DWCJBL3DPNHSVID3UUZ7FZZCA"
 SCRIPT_PATH = "/usr/local/bin/makeExecutable"
 
 JSON_DIR = os.path.join(os.path.expanduser("~"), ".config", "makeExecutable")
