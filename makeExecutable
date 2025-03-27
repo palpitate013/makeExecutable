@@ -6,6 +6,7 @@ import requests
 import stat
 import shutil
 import json
+import subprocess
 
 SCRIPT_VERSION = "1.0.0"
 REMOTE_SCRIPT_URL = "https://raw.githubusercontent.com/palpitate013/makeExecutable/refs/heads/main/makeExecutable"
@@ -87,6 +88,26 @@ def save_executable_command(executable_name, target_path):
 
     print(f"Saved executable '{executable_name}' to '{JSON_FILE}'.")
 
+def add_to_startup(file_path):
+    """Add the executable to system startup using crontab (for Linux)."""
+    # Check if cron already has an entry for the script
+    try:
+        cron_tab = subprocess.check_output(["crontab", "-l"]).decode()
+    except subprocess.CalledProcessError:
+        cron_tab = ""
+
+    # The @reboot line will make the file run on system boot
+    cron_entry = f"@reboot {file_path}\n"
+
+    if cron_entry not in cron_tab:
+        with open("/tmp/crontab", "w") as f:
+            f.write(cron_tab + cron_entry)
+        subprocess.run(["crontab", "/tmp/crontab"])
+        os.remove("/tmp/crontab")
+        print(f"Added '{file_path}' to system startup.")
+    else:
+        print(f"'{file_path}' is already in the startup list.")
+
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Usage: makeExecutable <file_path> <executable_name> [--start]")
@@ -98,4 +119,5 @@ if __name__ == "__main__":
     make_executable(file_path, executable_name)
 
     if "--start" in sys.argv:
-        save_executable_command(executable_name, os.path.join("/usr/local/bin", executable_name))
+            executable_path = os.path.join("/usr/local/bin", executable_name)
+            add_to_startup(executable_path)
