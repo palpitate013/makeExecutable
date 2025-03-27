@@ -8,7 +8,7 @@ import shutil
 import json
 import subprocess
 
-SCRIPT_VERSION = "1.0.1"
+SCRIPT_VERSION = "1.0.2"
 REMOTE_SCRIPT_URL = "https://raw.githubusercontent.com/palpitate013/makeExecutable/refs/heads/main/makeExecutable"
 SCRIPT_PATH = "/usr/local/bin/makeExecutable"
 
@@ -51,6 +51,20 @@ def make_executable(file_path, executable_name):
     if not os.path.exists(file_path):
         print(f"Error: The file '{file_path}' does not exist.")
         return
+
+    # Ensure the shebang is added if the file is a Python script
+    if file_path.endswith(".py"):
+        with open(file_path, "r") as f:
+            lines = f.readlines()
+
+        # If the first line doesn't start with #!/usr/bin/env python3, add it
+        if not lines[0].startswith("#!"):
+            lines.insert(0, "#!/usr/bin/env python3\n")
+
+        # Rewrite the file with the shebang added
+        with open(file_path, "w") as f:
+            f.writelines(lines)
+        print(f"Added shebang to {file_path}")
 
     current_permissions = os.stat(file_path).st_mode
     new_permissions = current_permissions | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
