@@ -1,0 +1,99 @@
+import os
+import sys
+import requests
+import stat
+import shutil
+import json
+
+SCRIPT_VERSION = "1.0.0"
+REMOTE_SCRIPT_URL = ""
+SCRIPT_PATH = "/usr/local/bin/makeExecutable"
+
+JSON_DIR = os.path.join(os.path.expanduser("~"), ".config", "makeExecutable")
+JSON_FILE = os.path.join(JSON_DIR, "executables.json")
+
+def check_for_updates():
+    """Check if there's a new version of the script available and update if needed."""
+    try:
+        response = requests.get(REMOTE_SCRIPT_URL)
+        response.raise_for_status()
+        remote_script = response.text
+
+        if SCRIPT_VERSION in remote_script:
+            print("You already have the latest version.")
+            return
+
+        print("New version found! Updating script...")
+        with open(SCRIPT_PATH, "w") as script_file:
+            script_file.write(remote_script)
+
+        os.chmod(SCRIPT_PATH, 0o755)  # Ensure the script remains executable
+        print("Update complete! Restart the script.")
+
+    except requests.RequestException as e:
+        print(f"Failed to check for updates: {e}")
+
+if "--update" in sys.argv:
+    check_for_updates()
+    sys.exit(0)
+
+def make_executable(file_path, executable_name):
+    """
+    Modify file permissions to make the specified file executable
+    and create a command for it.
+
+    :param file_path: Path to the file to make executable
+    :param executable_name: The name of the command for the executable
+    """
+    if not os.path.exists(file_path):
+        print(f"Error: The file '{file_path}' does not exist.")
+        return
+
+    current_permissions = os.stat(file_path).st_mode
+    new_permissions = current_permissions | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+    os.chmod(file_path, new_permissions)
+
+    target_dir = "/usr/local/bin"
+    target_path = os.path.join(target_dir, executable_name)
+
+    try:
+        shutil.copy(file_path, target_path)
+        os.chmod(target_path, new_permissions)
+        print(f"'{file_path}' is now executable and available as '{executable_name}' in '{target_dir}'.")
+        save_executable_command(executable_name, target_path)
+    except PermissionError:
+        print(f"Error: You don't have permission to write to '{target_dir}'. Try running with sudo.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def save_executable_command(executable_name, target_path):
+    """Save the executable command to a JSON file in a custom directory."""
+    os.makedirs(JSON_DIR, exist_ok=True)
+    executables = {}
+
+    if os.path.exists(JSON_FILE):
+        with open(JSON_FILE, "r") as f:
+            try:
+                executables = json.load(f)
+            except json.JSONDecodeError:
+                pass
+
+    executables[executable_name] = target_path
+
+    with open(JSON_FILE, "w") as f:
+        json.dump(executables, f, indent=4)
+
+    print(f"Saved executable '{executable_name}' to '{JSON_FILE}'.")
+
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        print("Usage: makeExecutable <file_path> <executable_name> [--start]")
+        sys.exit(1)
+
+    file_path = sys.argv[1]
+    executable_name = sys.argv[2]
+
+    make_executable(file_path, executable_name)
+
+    if "--start" in sys.argv:
+        save_executable_command(executable_name, os.path.join("/usr/local/bin", executable_name))
