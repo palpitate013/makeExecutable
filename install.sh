@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define variables
-SCRIPT_URL="https://raw.githubusercontent.com/palpitate013/makeExecutable/refs/heads/main/makeExecutable?token=GHSAT0AAAAAADBIL3DWCJBL3DPNHSVID3UUZ7FZZCA"
+SCRIPT_URL="https://raw.githubusercontent.com/palpitate013/makeExecutable/refs/heads/main/makeExecutable"
 INSTALL_PATH="/usr/local/bin/makeExecutable"
 
 # Ensure the script is run with sudo
