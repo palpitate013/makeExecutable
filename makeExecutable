@@ -9,7 +9,7 @@ import json
 import subprocess
 import argparse
 
-SCRIPT_VERSION = "1.0.7"
+SCRIPT_VERSION = "1.0.8"
 REMOTE_SCRIPT_URL = "https://raw.githubusercontent.com/palpitate013/makeExecutable/refs/heads/main/makeExecutable"
 SCRIPT_PATH = "/usr/local/bin/makeExecutable"
 
