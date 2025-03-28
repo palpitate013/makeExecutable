@@ -177,28 +177,19 @@ def add_to_startup(file_path):
         print(f"'{file_path}' is already in the startup list.")
 
 if __name__ == "__main__":
-    if "--update" in sys.argv:
-        check_for_updates()
-        sys.exit(0)
+    parser = argparse.ArgumentParser(description="Make a script executable and optionally add it to startup.")
+    parser.add_argument("file_path", nargs="?", help="Path to the file to make executable")
+    parser.add_argument("executable_name", nargs="?", help="The name of the executable command")
+    parser.add_argument("--remove", metavar="executable", help="Remove an existing executable")
+    parser.add_argument("--start", action="store_true", help="Add executable to system startup")
 
-    if "--remove" in sys.argv:
-        try:
-            executable_name = sys.argv[sys.argv.index("--remove") + 1]  # Get the next argument
-            remove_executable(executable_name)
-        except IndexError:
-            print("Error: Missing executable name. Usage: makeExecutable --remove <executable_name>")
-            sys.exit(1)
-        sys.exit(0)
+    args = parser.parse_args()
 
-    if len(sys.argv) < 3:
-        print("Usage: makeExecutable <file_path> <executable_name> [--start]")
-        sys.exit(1)
-
-    file_path = sys.argv[1]
-    executable_name = sys.argv[2]
-
-    if "--start" in sys.argv:
-            executable_path = os.path.join("/usr/local/bin", executable_name)
-            add_to_startup(executable_path)
+    if args.remove:
+        remove_executable(args.remove)
+    elif args.file_path and args.executable_name:
+        make_executable(args.file_path, args.executable_name)
+        if args.start:
+            add_to_startup(args.executable_name)
     else:
-        make_executable(file_path, executable_name)
+        parser.print_help()
