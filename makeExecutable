@@ -8,7 +8,7 @@ import shutil
 import json
 import subprocess
 
-SCRIPT_VERSION = "1.0.5"
+SCRIPT_VERSION = "1.0.6"
 REMOTE_SCRIPT_URL = "https://raw.githubusercontent.com/palpitate013/makeExecutable/refs/heads/main/makeExecutable"
 SCRIPT_PATH = "/usr/local/bin/makeExecutable"
 
@@ -48,6 +48,7 @@ def remove_executable(executable_name):
         print(f"Error reading or writing to crontab: {e}")
     except Exception as e:
         print(f"An unexpected error occurred while modifying crontab: {e}")
+
 def check_for_updates():
     """Check if there's a new version of the script available and update if needed."""
     try:
@@ -85,10 +86,9 @@ def add_to_crontab(executable_name):
             print(f"Added '{executable_name}' to crontab for startup.")
         else:
             print(f"'{executable_name}' is already in crontab.")
-    except subprocess.CalledProcessError as e:
-        print(f"Error reading or writing to crontab: {e}")
-    except Exception as e:
-        print(f"An unexpected error occurred while modifying crontab: {e}")
+    except subprocess.CalledProcessError:
+        print(f"Crontab is empty. Adding '{executable_name}' to startup.")
+        subprocess.run(['sudo', 'crontab', '-'], input=f"@reboot /usr/local/bin/{executable_name}\n", text=True)
 
 def make_executable(file_path, executable_name):
     """
@@ -177,6 +177,17 @@ def add_to_startup(file_path):
         print(f"'{file_path}' is already in the startup list.")
 
 if __name__ == "__main__":
+    if "--update" in sys.argv:
+        check_for_updates()
+        sys.exit(0)
+
+    if "--remove" in sys.argv:
+        if len(sys.argv) < 3:
+            print("Usage: makeExecutable --remove <executable_name>")
+            sys.exit(1)
+        remove_executable(sys.argv[2])
+        sys.exit(0)
+
     if len(sys.argv) < 3:
         print("Usage: makeExecutable <file_path> <executable_name> [--start]")
         sys.exit(1)
@@ -187,7 +198,5 @@ if __name__ == "__main__":
     if "--start" in sys.argv:
             executable_path = os.path.join("/usr/local/bin", executable_name)
             add_to_startup(executable_path)
-    if "--remove" in sys.argv:
-        remove_executable(executable_name)
     else:
         make_executable(file_path, executable_name)
