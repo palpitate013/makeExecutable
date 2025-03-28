@@ -9,7 +9,7 @@ import json
 import subprocess
 import argparse
 
-SCRIPT_VERSION = "1.0.8"
+SCRIPT_VERSION = "1.0.9"
 REMOTE_SCRIPT_URL = "https://raw.githubusercontent.com/palpitate013/makeExecutable/refs/heads/main/makeExecutable"
 SCRIPT_PATH = "/usr/local/bin/makeExecutable"
 
@@ -184,11 +184,21 @@ if __name__ == "__main__":
     parser.add_argument("--remove", metavar="executable", help="Remove an existing executable")
     parser.add_argument("--start", action="store_true", help="Add executable to system startup")
 
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
 
+    # Allow --remove anywhere in the command
     if args.remove:
         remove_executable(args.remove)
-    elif args.file_path and args.executable_name:
+
+    if unknown and "--remove" in unknown:
+        # If --remove is used without an argument, assume file_path is meant to be removed
+        if args.file_path:
+            remove_executable(args.file_path)
+        else:
+            print("Error: Missing executable name for --remove.")
+
+    # Handle making a file executable
+    if args.file_path and args.executable_name:
         make_executable(args.file_path, args.executable_name)
         if args.start:
             add_to_startup(args.executable_name)
