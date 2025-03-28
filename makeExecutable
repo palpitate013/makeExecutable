@@ -9,7 +9,7 @@ import json
 import subprocess
 import argparse
 
-SCRIPT_VERSION = "1.0.9"
+SCRIPT_VERSION = "1.0.10"
 REMOTE_SCRIPT_URL = "https://raw.githubusercontent.com/palpitate013/makeExecutable/refs/heads/main/makeExecutable"
 SCRIPT_PATH = "/usr/local/bin/makeExecutable"
 
@@ -190,12 +190,27 @@ if __name__ == "__main__":
     if args.remove:
         remove_executable(args.remove)
 
-    if unknown and "--remove" in unknown:
-        # If --remove is used without an argument, assume file_path is meant to be removed
-        if args.file_path:
-            remove_executable(args.file_path)
+# Allow --remove anywhere in the command
+if "--remove" in sys.argv:
+    try:
+        # Find the index of --remove and extract the adjacent argument
+        remove_index = sys.argv.index("--remove")
+
+        # Determine if the argument is before or after --remove
+        if remove_index > 0 and sys.argv[remove_index - 1] not in ["--start", "--update"]:
+            executable_to_remove = sys.argv[remove_index - 1]
+        elif remove_index + 1 < len(sys.argv):
+            executable_to_remove = sys.argv[remove_index + 1]
         else:
             print("Error: Missing executable name for --remove.")
+            sys.exit(1)
+
+        remove_executable(executable_to_remove)
+        sys.exit(0)
+
+    except IndexError:
+        print("Error: Missing executable name for --remove.")
+        sys.exit(1)
 
     # Handle making a file executable
     if args.file_path and args.executable_name:
