@@ -8,7 +8,7 @@ import shutil
 import json
 import subprocess
 
-SCRIPT_VERSION = "1.0.6"
+SCRIPT_VERSION = "1.0.7"
 REMOTE_SCRIPT_URL = "https://raw.githubusercontent.com/palpitate013/makeExecutable/refs/heads/main/makeExecutable"
 SCRIPT_PATH = "/usr/local/bin/makeExecutable"
 
@@ -182,10 +182,12 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if "--remove" in sys.argv:
-        if len(sys.argv) < 3:
-            print("Usage: makeExecutable --remove <executable_name>")
+        try:
+            executable_name = sys.argv[sys.argv.index("--remove") + 1]  # Get the next argument
+            remove_executable(executable_name)
+        except IndexError:
+            print("Error: Missing executable name. Usage: makeExecutable --remove <executable_name>")
             sys.exit(1)
-        remove_executable(sys.argv[2])
         sys.exit(0)
 
     if len(sys.argv) < 3:
